@@ -10,6 +10,7 @@ import Foundation
 class Board: ObservableObject{
     
     @Published var grid: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)  // Make grid mutable
+    var fullGrid: [[Int]] = []  // Make grid mutable
     var boolCheck: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)  // true if cell is mutable. all cells are initialized as false
 //
 //    init() {
@@ -60,6 +61,7 @@ class Board: ObservableObject{
     
     func removedNumbers(numClues clues: Int, grid: inout [[Int]]) {
         // create a list of all cell positions
+//        let fullGrid = grid
         var positions: [(Int, Int)] = [(Int, Int)]()
         for row in 0..<9 {
             for col in 0..<9 {
@@ -122,6 +124,7 @@ class Board: ObservableObject{
     
     func generateBoard(numClues clues: Int) {
         _ = fillGrid() // the grid gets completely filled with a valid solution
+        fullGrid = grid
         removedNumbers(numClues: 30, grid: &grid)
     }
     
@@ -129,10 +132,18 @@ class Board: ObservableObject{
         for row in grid {
             print(row.map({ String($0) }).joined(separator: " "))
         }
+        print("-----------------")
+        for row in fullGrid {
+            print(row.map({ String($0) }).joined(separator: " "))
+        }
     }
     
     func playBoard() -> [[Int]]{
         return grid
+    }
+    
+    func fullBoard() -> [[Int]]{
+        return fullGrid
     }
     
     func cellBool() {
@@ -148,7 +159,11 @@ class Board: ObservableObject{
         boolCheck[row][col] = false
     }
     
-    func generateBoolBoard() -> [[Bool]] {
+    func generateBoolBoard(){
+        cellBool()
+    }
+    
+    func boolBoard() -> [[Bool]] {
         cellBool()
         return boolCheck
     }

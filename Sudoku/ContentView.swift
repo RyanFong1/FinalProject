@@ -4,21 +4,20 @@
 //
 // Created by Grace She on 2025-01-13
 
+// restart button
+
 import SwiftUI
 
 struct CellChanges: View {
     @ObservedObject var board = Board()
-    @State var state: Bool
     @Binding var tapped: Bool
     @Binding var fill: [Bool]
-    @Binding var tappedCellIndex: Int
     @Binding var fillNum: [Bool]
     var row: Int
     var col: Int
     @State var cellNum = false
     @Binding var currentNumber : Int
     @Binding var newlyAdded: [[Int]]
-    
 
     
     var body: some View {
@@ -29,23 +28,17 @@ struct CellChanges: View {
                 .border(.black)
                 .frame(width: 40, height: 40)
                 .onTapGesture {
-                    cellNum = true
                     if currentNumber != -1 {
                         board.updateCell(row: row, col: col, num: currentNumber)
-//                        board.generateBoolBoard()
-                        newlyAdded.append([row, col])
+                        board.printGrid()
+                        if !newlyAdded.contains([row, col]) {
+                            newlyAdded.append([row, col])
+                        }
                         print("\(newlyAdded)")
                     }
+                    cellNum = true
 
                 }
-            if (cellNum) && (currentNumber != -1) && (newlyAdded.contains([row, col])) {
-                Text("\(currentNumber)")
-                    .foregroundColor(.black)
-                    .font(.system(size: 29, weight: .medium))
-//                            fillNum = [false, false, false, false, false, false, false, false, false]
-                            
-            
-            }
             
         }
         
@@ -62,7 +55,7 @@ struct BoardView: View {
     
     @State var tapLocation: CGPoint?
     @Binding var fill: [Bool]
-    @State var tapped = false
+    @Binding var tapped: Bool
     @State var tappedCellIndex = 0
     @Binding var fillNum: [Bool]
     @Binding var currentNum: Int
@@ -75,8 +68,8 @@ struct BoardView: View {
                     HStack(spacing: 0) {
                         ForEach(0..<9, id: \.self) { col in
                             // Create a binding for each sudoku cell
-                            if board.generateBoolBoard()[row][col] {
-                                CellChanges(board: board, state: board.generateBoolBoard()[row][col], tapped: $tapped, fill: $fill, tappedCellIndex: $tappedCellIndex, fillNum: $fillNum, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded)
+                            if board.boolBoard()[row][col] {
+                                CellChanges(board: board, tapped: $tapped, fill: $fill, fillNum: $fillNum, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded)
                                     .onTapGesture {
                                         currentNum = -1
                                     }
@@ -87,7 +80,9 @@ struct BoardView: View {
                                         .border(.black)
                                         .frame(width: 40, height: 40)
                                     Text("\(board.playBoard()[row][col])")
+                                        .foregroundColor(board.playBoard()[row][col] == board.fullBoard()[row][col] ? .black : .red)
                                         .font(.system(size: 29, weight: .medium))
+                                    
                                 }
                             }
                         }
@@ -109,7 +104,6 @@ struct ContentView: View {
     @State var fillNum = [false, false, false, false, false, false, false, false, false]
     @State var fill = Array(repeating: false, count: 81)
     @State var tapped = false
-    @State var tappedCellIndex = 0
     @State var currentNumber = -1
 
     private var actions = ["Undo", "Erase", "Notes", "Hint"]
@@ -134,7 +128,7 @@ struct ContentView: View {
             .padding(.top, 50)
             Spacer()
             ZStack {
-                BoardView(board: board, fill: $fill, fillNum: $fillNum, currentNum: $currentNumber, newlyAdded: $newlyAdded)
+                BoardView(board: board, fill: $fill, tapped: $tapped, fillNum: $fillNum, currentNum: $currentNumber, newlyAdded: $newlyAdded)
                 CellView()
             }
             
@@ -151,10 +145,7 @@ struct ContentView: View {
                             .font(.system(size: 45, weight: .semibold))
                             .foregroundColor(.red)
                             .onTapGesture {
-//                                fillNum = [true, false, false, false, false, false, false, false, false]
-//                                print(fill)
                                 currentNumber = 1
-                                print("1 was tapped!")
                             }
                     }
                     ZStack {
@@ -283,14 +274,11 @@ struct ContentView: View {
                             DragGesture(minimumDistance: 0)
                                 .onChanged {_ in
                                     colorUndo = Color.blue.opacity(0.5)
-//                                    if newlyAdded.count > 0 {
-//                                        colorUndo = Color.blue.opacity(1.0)
-//                                    }
                                     }
                                 .onEnded { _ in
                                     colorUndo = Color.blue.opacity(1.0)
                                     if newlyAdded.count > 0 {
-                                        var last = newlyAdded.removeLast()
+                                        let last = newlyAdded.removeLast()
                                         board.updateCell(row: last[0], col: last[1], num: 0)
                                     }
                                 }
@@ -367,30 +355,6 @@ struct ContentView: View {
         erase = action == "erase"
         notes = action == "notes"
     }
-    
-//    private func whileTapping() {
-//        Circle()
-//            .foregroundColor(Color.blue.opacity(1.0))
-//            .frame(width: 80, height: 80)
-//            .overlay (
-//                Image(systemName: "arrow.counterclockwise")
-//                    .resizable()
-//                    .frame(width: 40, height: 45)
-//                    .foregroundColor(.white)
-//            )
-//    }
-//    
-//    private func afterTapping() {
-//        Circle()
-//            .foregroundColor(Color.blue.opacity(0.5))
-//            .frame(width: 80, height: 80)
-//            .overlay (
-//                Image(systemName: "arrow.counterclockwise")
-//                    .resizable()
-//                    .frame(width: 40, height: 45)
-//                    .foregroundColor(.white)
-//            )
-//    }
 }
 
 #Preview {
