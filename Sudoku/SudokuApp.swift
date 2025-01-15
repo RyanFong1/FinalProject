@@ -1,14 +1,14 @@
 //
-//  AppSelectorApp.swift
-//  AppSelector
+//  SudokuApp.swift
+//  Sudoku
 //
-//  Created by Ryan Fong on 2025-01-14.
+//  Created by Grace She on 2025-01-13.
 //
 
 import SwiftUI
 
 @main
-struct AppSelectorApp: App {
+struct SudokuApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -1,13 +1,13 @@
 //
-//  AppSelectorUITests.swift
-//  AppSelectorUITests
+//  SudokuUITests.swift
+//  SudokuUITests
 //
-//  Created by Ryan Fong on 2025-01-14.
+//  Created by Grace She on 2025-01-13.
 //
 
 import XCTest
 
-final class AppSelectorUITests: XCTestCase {
+final class SudokuUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

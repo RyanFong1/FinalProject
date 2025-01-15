@@ -1,13 +1,13 @@
 //
-//  AppSelectorUITestsLaunchTests.swift
-//  AppSelectorUITests
+//  SudokuUITestsLaunchTests.swift
+//  SudokuUITests
 //
-//  Created by Ryan Fong on 2025-01-14.
+//  Created by Grace She on 2025-01-13.
 //
 
 import XCTest
 
-final class AppSelectorUITestsLaunchTests: XCTestCase {
+final class SudokuUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
