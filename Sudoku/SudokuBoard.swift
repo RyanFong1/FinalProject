@@ -12,11 +12,6 @@ class Board: ObservableObject{
     @Published var grid: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)  // Make grid mutable
     var fullGrid: [[Int]] = []  // Make grid mutable
     var boolCheck: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)  // true if cell is mutable. all cells are initialized as false
-//    var restart: Bool
-//
-//    init() {
-//        generateBoard(numClues: 30)
-//    }
     
     func fillGrid() -> Bool {
         for row in 0..<9 {
@@ -129,7 +124,7 @@ class Board: ObservableObject{
         }
         _ = fillGrid() // the grid gets completely filled with a valid solution
         fullGrid = grid
-        removedNumbers(numClues: 30, grid: &grid)
+        removedNumbers(numClues: clues, grid: &grid)
     }
     
     func printGrid() {

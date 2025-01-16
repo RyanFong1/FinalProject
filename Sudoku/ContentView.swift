@@ -21,6 +21,7 @@ struct CellChanges: View {
     @State private var navigateToGameOver = false
     @Binding var gameOver: Bool
     @Binding var undo: Bool
+    @Binding var gameWon: Bool
     
     var body: some View {
 
@@ -36,10 +37,10 @@ struct CellChanges: View {
                         if !newlyAdded.contains([row, col]) {
                             newlyAdded.append([row, col])
                         }
-                        if newlyAdded.count > 0 {
-                            undo = true
-                        } else {
+                        if newlyAdded.count <= 0 {
                             undo = false
+                        } else {
+                            undo = true
                         }
                         if board.playBoard()[row][col] != board.fullBoard()[row][col] {
                             if lives.count > 0 {
@@ -47,6 +48,9 @@ struct CellChanges: View {
                             } else {
                                 gameOver = true
                             }
+                        }
+                        if board.playBoard() == board.fullBoard() {
+                            gameWon = true
                         }
                         print("\(newlyAdded)")
                     }
@@ -75,6 +79,7 @@ struct BoardView: View {
     @Binding var lives: [Bool]
     @Binding var gameOver: Bool
     @Binding var undo: Bool
+    @Binding var gameWon: Bool
     
     var body: some View {
         ZStack {
@@ -84,7 +89,7 @@ struct BoardView: View {
                         ForEach(0..<9, id: \.self) { col in
                             // Create a binding for each sudoku cell
                             if board.boolBoard()[row][col] {
-                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo)
+                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon)
                                     .onTapGesture {
                                         currentNum = -1
                                     }
@@ -111,7 +116,7 @@ struct BoardView: View {
 
 struct ContentView: View {
     
-    @State private var notes = false
+    @State private var notes = true
     @State private var erase = false
     @State private var undo = false
     @State var tapLocation: CGPoint?
@@ -143,7 +148,9 @@ struct ContentView: View {
     @State private var instructions = true
     @State private var firstTime = true
     @State private var imageName = "questionmark.circle"
-
+    @State var gameWon = false
+    @State var levelSelection = false
+    @State var numClues = 0
     
     var body: some View {
         
@@ -245,7 +252,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 ZStack {
-                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo)
+                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon)
                     CellView()
                 }
                 
@@ -390,13 +397,19 @@ struct ContentView: View {
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged {_ in
-                                        undo.toggle()
-//                                        colorUndo = Color.blue.opacity(1.0)
+                                        undo = false
+                                        //                                        colorUndo = Color.blue.opacity(1.0)
                                     }
                                     .onEnded { _ in
-                                        undo.toggle()
-                                        let last = newlyAdded.removeLast()
-                                        board.updateCell(row: last[0], col: last[1], num: 0)
+                                        //                                        undo.toggle()
+                                        if newlyAdded.count > 0 {
+                                            undo.toggle()
+                                            let last = newlyAdded.removeLast()
+                                            board.updateCell(row: last[0], col: last[1], num: 0)
+                                            if newlyAdded.count == 0 {
+                                                undo = false
+                                            }
+                                        }
                                     }
                             )
                         
@@ -441,12 +454,12 @@ struct ContentView: View {
                 }
                 
             }
-            .onAppear {
-                board.generateBoard(numClues: 30, restart: restart)
-                board.printGrid()
-                print(board.generateBoolBoard())
-            }
-            
+//            .onAppear {
+//                board.generateBoard(numClues: 80, restart: restart)
+//                board.printGrid()
+//                print(board.generateBoolBoard())
+//            }
+//            
             if instructions {
                 ZStack {
                     Rectangle()
@@ -460,38 +473,88 @@ struct ContentView: View {
                         .fontWeight(.heavy)
                     Text("""
     1. Fill the 9x9 grid with 
-       numbers 1-9
+        numbers 1-9
     2. In each row, each column, 
-       and each 3x3 box, the numbers 
-       1-9 must only appear ONCE
+        and each 3x3 box, the numbers 
+        1-9 must only appear ONCE
     3. Use the existing numbers
-       as clues
+        as clues
     4. Good luck!
     """)
                     Button(action: {
                         instructions = false
+                        if firstTime {
+                            levelSelection = true
+                            firstTime = false
+                        }
                         imageName = "questionmark.circle.fill"
                     }) {
                         Text("Close")
                             .font(.title)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                 }
             }
             
             
-            if gameOver {
+            if levelSelection {
+                ZStack {
+                    Rectangle()
+                        .fill(.white)
+                        .border(.black, width: 5)
+                        .frame(width: 200, height: 200)
+                    VStack {
+                        Button(action: {
+                            board.generateBoard(numClues: 50, restart: restart)
+                            board.printGrid()
+                            print(board.generateBoolBoard())
+                            levelSelection = false
+                        }) {
+                            Text("Easy")
+                                .font(.title)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        Button(action: {
+                            board.generateBoard(numClues: 40, restart: restart)
+                            board.printGrid()
+                            print(board.generateBoolBoard())
+                            levelSelection = false
+                        }) {
+                            Text("Medium")
+                                .font(.title)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        Button(action: {
+                            board.generateBoard(numClues: 30, restart: restart)
+                            board.printGrid()
+                            print(board.generateBoolBoard())
+                            levelSelection = false
+                        }) {
+                            Text("Hard")
+                                .font(.title)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
+            
+            if 
+            
+            if gameOver || gameWon {
                 ZStack {
                     Rectangle()
                         .fill(.white)
                         .border(.black, width: 5)
                         .frame(width: 300, height: 200)
                     VStack {
-                        Text("GAME LOST")
+                        Text(gameOver ? "GAME LOST" : "GAME WON")
                             .font(.largeTitle)
                         Button(action: {
                             board.printGrid()
                             gameOver = false
+                            gameWon = false
                             restart = true
                             lives = [true, true, true]
                             one = false
@@ -504,8 +567,11 @@ struct ContentView: View {
                             eight = false
                             nine = false
                             currentNumber = -1
-                            board.generateBoard(numClues: 30, restart: restart)
-                            board.printGrid()
+                            undo = false
+                            newlyAdded = []
+                            levelSelection = true
+//                            board.generateBoard(numClues: 80, restart: restart)
+//                            board.printGrid()
                         }) {
                             Text("Restart")
                                 .font(.title)
@@ -514,6 +580,7 @@ struct ContentView: View {
                     }
                 }
             }
+            
         }
     }
     
@@ -536,7 +603,7 @@ struct ContentView: View {
 //            }
 //        }
     private func toggleActions(action: String) {
-        undo = action == "undo"
+//        undo = action == "undo"
         erase = action == "erase"
         notes = action == "notes"
     }
