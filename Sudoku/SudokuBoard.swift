@@ -153,9 +153,9 @@ class Board: ObservableObject{
         }
     }
     
-    func updateCell(row: Int, col: Int, num: Int) {
+    func updateCell(row: Int, col: Int, num: Int, bool: Bool) {
         grid[row][col] = num
-        boolCheck[row][col] = false
+        boolCheck[row][col] = bool
     }
     
     func generateBoolBoard(){

@@ -22,6 +22,9 @@ struct CellChanges: View {
     @Binding var gameOver: Bool
     @Binding var undo: Bool
     @Binding var gameWon: Bool
+    @Binding var erase: Bool
+    @Binding var eraseRow: Int
+    @Binding var eraseCol: Int
     
     var body: some View {
 
@@ -32,7 +35,7 @@ struct CellChanges: View {
                 .frame(width: 40, height: 40)
                 .onTapGesture {
                     if currentNumber != -1 {
-                        board.updateCell(row: row, col: col, num: currentNumber)
+                        board.updateCell(row: row, col: col, num: currentNumber, bool: false)
                         board.printGrid()
                         if !newlyAdded.contains([row, col]) {
                             newlyAdded.append([row, col])
@@ -54,14 +57,40 @@ struct CellChanges: View {
                         }
                         print("\(newlyAdded)")
                     }
-                    cellNum = true
 
                 }
             
         }
-        
-        .onChange(of: currentNumber) {
-            cellNum = false
+
+    }
+}
+
+struct PrintNum: View {
+    @ObservedObject var board = Board()
+    var row: Int
+    var col: Int
+    @Binding var erase: Bool
+    @Binding var newlyAdded: [[Int]]
+    
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(.white)
+                .border(.black)
+                .frame(width: 40, height: 40)
+            Text("\(board.playBoard()[row][col])")
+                .foregroundColor(board.playBoard()[row][col] == board.fullBoard()[row][col] ? .black : .red)
+                .font(.system(size: 29, weight: .medium))
+                .onTapGesture {
+                    if erase {
+                        if newlyAdded.contains([row, col]) {
+                            if let firstIndex = newlyAdded.firstIndex(of: [row, col]) {
+                                newlyAdded.remove(at: firstIndex)
+                            }
+                            board.updateCell(row: row, col: col, num: 0, bool: true)
+                        }
+                    }
+                }
         }
     }
 }
@@ -70,7 +99,6 @@ struct BoardView: View {
     
     @ObservedObject var board = Board()
     
-    @State var tapLocation: CGPoint?
     @Binding var fill: [Bool]
     @Binding var tapped: Bool
     @State var tappedCellIndex = 0
@@ -80,6 +108,9 @@ struct BoardView: View {
     @Binding var gameOver: Bool
     @Binding var undo: Bool
     @Binding var gameWon: Bool
+    @Binding var erase: Bool
+    @Binding var eraseRow: Int
+    @Binding var eraseCol: Int
     
     var body: some View {
         ZStack {
@@ -89,21 +120,12 @@ struct BoardView: View {
                         ForEach(0..<9, id: \.self) { col in
                             // Create a binding for each sudoku cell
                             if board.boolBoard()[row][col] {
-                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon)
+                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, eraseRow: $eraseRow, eraseCol: $eraseCol)
                                     .onTapGesture {
                                         currentNum = -1
                                     }
                             } else {
-                                ZStack {
-                                    Rectangle()
-                                        .fill(.white)
-                                        .border(.black)
-                                        .frame(width: 40, height: 40)
-                                    Text("\(board.playBoard()[row][col])")
-                                        .foregroundColor(board.playBoard()[row][col] == board.fullBoard()[row][col] ? .black : .red)
-                                        .font(.system(size: 29, weight: .medium))
-                                    
-                                }
+                                PrintNum(board: board, row: row, col: col, erase: $erase, newlyAdded: $newlyAdded)
                             }
                         }
                     }
@@ -116,10 +138,9 @@ struct BoardView: View {
 
 struct ContentView: View {
     
-    @State private var notes = true
+    @State private var notes = false
     @State private var erase = false
     @State private var undo = false
-    @State var tapLocation: CGPoint?
     
     @State var fill = Array(repeating: false, count: 81)
     @State var tapped = false
@@ -151,6 +172,8 @@ struct ContentView: View {
     @State var gameWon = false
     @State var levelSelection = false
     @State var numClues = 0
+    @State var eraseRow = 0
+    @State var eraseCol = 0
     
     var body: some View {
         
@@ -252,7 +275,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 ZStack {
-                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon)
+                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, eraseRow: $eraseRow, eraseCol: $eraseCol)
                     CellView()
                 }
                 
@@ -389,23 +412,16 @@ struct ContentView: View {
                                     .frame(width: 40, height: 45)
                                     .foregroundColor(.white)
                             )
-                        //                        .onTapGesture {
-                        
-                        
-                        //                            toggleActions(action: "undo")
-                        //                        }
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged {_ in
                                         undo = false
-                                        //                                        colorUndo = Color.blue.opacity(1.0)
                                     }
                                     .onEnded { _ in
-                                        //                                        undo.toggle()
                                         if newlyAdded.count > 0 {
                                             undo.toggle()
                                             let last = newlyAdded.removeLast()
-                                            board.updateCell(row: last[0], col: last[1], num: 0)
+                                            board.updateCell(row: last[0], col: last[1], num: 0, bool: true)
                                             if newlyAdded.count == 0 {
                                                 undo = false
                                             }
@@ -454,12 +470,7 @@ struct ContentView: View {
                 }
                 
             }
-//            .onAppear {
-//                board.generateBoard(numClues: 80, restart: restart)
-//                board.printGrid()
-//                print(board.generateBoolBoard())
-//            }
-//            
+
             if instructions {
                 ZStack {
                     Rectangle()
@@ -540,8 +551,6 @@ struct ContentView: View {
                 }
             }
             
-            if 
-            
             if gameOver || gameWon {
                 ZStack {
                     Rectangle()
@@ -568,10 +577,10 @@ struct ContentView: View {
                             nine = false
                             currentNumber = -1
                             undo = false
+                            erase = false
+                            notes = false
                             newlyAdded = []
                             levelSelection = true
-//                            board.generateBoard(numClues: 80, restart: restart)
-//                            board.printGrid()
                         }) {
                             Text("Restart")
                                 .font(.title)
@@ -584,28 +593,19 @@ struct ContentView: View {
         }
     }
     
-//    private func toggleActions(action: String, cellBool: Bool, cellValue: Int, cellNotes: Int) {
-//        if action == "undo" {
-//            if cellBool {
-//                undo = true
-//            }
-//        }
-//        
-//        if action == "notes" {
-//            notes = true
-//            if cellBool {
-//                if cellValue != 0 || cellNotes != 0 { // need to create notes and allow cell value and cell notes to be entered
-//                    erase = true
-//                    undo = true
-//                } else {
-//                    erase = false
-//                }
-//            }
-//        }
     private func toggleActions(action: String) {
-//        undo = action == "undo"
-        erase = action == "erase"
-        notes = action == "notes"
+        if erase {
+            erase = false
+        } else {
+            erase = action == "erase"
+        }
+        
+        if notes {
+            notes = false
+        } else {
+            notes = action == "notes"
+        }
+        
     }
     
     private func toggleFillerActions(action: String) {
