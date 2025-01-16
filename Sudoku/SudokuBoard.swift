@@ -12,6 +12,7 @@ class Board: ObservableObject{
     @Published var grid: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)  // Make grid mutable
     var fullGrid: [[Int]] = []  // Make grid mutable
     var boolCheck: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)  // true if cell is mutable. all cells are initialized as false
+//    var restart: Bool
 //
 //    init() {
 //        generateBoard(numClues: 30)
@@ -122,7 +123,10 @@ class Board: ObservableObject{
         return false // exits the recursion
     }
     
-    func generateBoard(numClues clues: Int) {
+    func generateBoard(numClues clues: Int, restart: Bool) {
+        if restart {
+            grid = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+        }
         _ = fillGrid() // the grid gets completely filled with a valid solution
         fullGrid = grid
         removedNumbers(numClues: 30, grid: &grid)
