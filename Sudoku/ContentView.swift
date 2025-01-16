@@ -134,57 +134,130 @@ struct ContentView: View {
     @State private var seven = false
     @State private var eight = false
     @State private var nine = false
+    @State private var instructions = true
+    @State private var firstTime = true
+    @State private var imageName = "questionmark.circle"
 
     
     var body: some View {
         
         ZStack {
+//            if instructions {
+//                    Rectangle()
+//                        .fill(.white)
+//                        .border(.black, width: 5)
+//                        .frame(width: 300, height: 200)
+//                    VStack {
+//                        Text("""
+//        1. Fill the 9x9 grid with numbers 1-9
+//        2. In each row, column, and 3x3 box, the numbers 1-9 must only appear ONCE
+//        3. Use the existing numbers as clues
+//        4. Good luck!
+//    """)
+//                    }
+//                    Button(action: {
+//                        instructions = false
+//                    }) {
+//                        Text("Close")
+//                            .font(.title)
+//                    }
+//                    .buttonStyle(.bordered)
+//            }
+            
             VStack {
                 if lives.count == 3 {
-                    HStack(spacing: 8) {
-                        ForEach(1..<4) { _ in
-                            Image(systemName: "heart.fill")
-                                .resizable()
-                                .frame(width: 30, height: 27)
-                                .foregroundColor(.red)
+                    ZStack {
+                        HStack(spacing: 8) {
+                            ForEach(1..<4) { _ in
+                                Image(systemName: "heart.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 27)
+                                    .foregroundColor(.red)
+                            }
                         }
+                        .padding(.top, 50)
+                        Image(systemName: imageName)
+                            .resizable()
+                            .foregroundColor(.yellow)
+                            .frame(width: 70, height: 70)
+                            .padding(.leading, 270)
+                            .padding(.top, 10)
+                            .onTapGesture {
+                                imageName = "questionmark.circle"
+                                instructions = true
+                            }
                     }
-                    .padding(.top, 50)
                 } else if lives.count == 2 {
-                    HStack(spacing: 8) {
-                        ForEach(1..<3) { _ in
+                    ZStack {
+                        HStack(spacing: 8) {
+                            ForEach(1..<3) { _ in
+                                Image(systemName: "heart.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 27)
+                                    .foregroundColor(.red)
+                            }
+                            Image(systemName: "heart")
+                                .resizable()
+                                .frame(width: 30, height: 27)
+                        }
+                        .padding(.top, 50)
+                        Image(systemName: imageName)
+                            .resizable()
+                            .foregroundColor(.yellow)
+                            .frame(width: 70, height: 70)
+                            .padding(.leading, 270)
+                            .padding(.top, 10)
+                            .onTapGesture {
+                                imageName = "questionmark.circle"
+                                instructions = true
+                            }
+                    }
+                } else if lives.count == 1 {
+                    ZStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "heart.fill")
                                 .resizable()
                                 .frame(width: 30, height: 27)
                                 .foregroundColor(.red)
+                            ForEach(1..<3) { _ in
+                                Image(systemName: "heart")
+                                    .resizable()
+                                    .frame(width: 30, height: 27)
+                            }
                         }
-                        Image(systemName: "heart")
+                        .padding(.top, 50)
+                        Image(systemName: imageName)
                             .resizable()
-                            .frame(width: 30, height: 27)
+                            .foregroundColor(.yellow)
+                            .frame(width: 70, height: 70)
+                            .padding(.leading, 270)
+                            .padding(.top, 10)
+                            .onTapGesture {
+                                imageName = "questionmark.circle"
+                                instructions = true
+                            }
                     }
-                    .padding(.top, 50)
-                } else if lives.count == 1 {
-                    HStack(spacing: 8) {
-                        Image(systemName: "heart.fill")
-                            .resizable()
-                            .frame(width: 30, height: 27)
-                            .foregroundColor(.red)
-                        ForEach(1..<3) { _ in
-                            Image(systemName: "heart")
-                                .resizable()
-                                .frame(width: 30, height: 27)
-                        }
-                    }
-                    .padding(.top, 50)
                 } else if lives.count == 0 {
-                    HStack(spacing: 8) {
-                        ForEach(1..<4) { _ in
-                            Image(systemName: "heart")
-                                .resizable()
-                                .frame(width: 30, height: 27)
+                    ZStack {
+                        HStack(spacing: 8) {
+                            ForEach(1..<4) { _ in
+                                Image(systemName: "heart")
+                                    .resizable()
+                                    .frame(width: 30, height: 27)
+                            }
                         }
+                        .padding(.top, 50)
+                        Image(systemName: imageName)
+                            .resizable()
+                            .foregroundColor(.yellow)
+                            .frame(width: 70, height: 70)
+                            .padding(.leading, 270)
+                            .padding(.top, 10)
+                            .onTapGesture {
+                                imageName = "questionmark.circle"
+                                instructions = true
+                            }
                     }
-                    .padding(.top, 50)
                 }
                 Spacer()
                 ZStack {
@@ -391,6 +464,39 @@ struct ContentView: View {
                 print(board.generateBoolBoard())
             }
             
+            if instructions {
+                ZStack {
+                    Rectangle()
+                        .fill(.white)
+                        .border(.black, width: 5)
+                        .frame(width: 300, height: 325)
+                }
+                VStack {
+                    Text("Instructions")
+                        .font(.largeTitle)
+                        .fontWeight(.heavy)
+                    Text("""
+    1. Fill the 9x9 grid with 
+       numbers 1-9
+    2. In each row, each column, 
+       and each 3x3 box, the numbers 
+       1-9 must only appear ONCE
+    3. Use the existing numbers
+       as clues
+    4. Good luck!
+    """)
+                    Button(action: {
+                        instructions = false
+                        imageName = "questionmark.circle.fill"
+                    }) {
+                        Text("Close")
+                            .font(.title)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            
+            
             if gameOver {
                 ZStack {
                     Rectangle()
@@ -405,6 +511,16 @@ struct ContentView: View {
                             gameOver = false
                             restart = true
                             lives = [true, true, true]
+                            one = false
+                            two = false
+                            three = false
+                            four = false
+                            five = false
+                            six = false
+                            seven = false
+                            eight = false
+                            nine = false
+                            currentNumber = -1
                             board.generateBoard(numClues: 30, restart: restart)
                             board.printGrid()
                         }) {
