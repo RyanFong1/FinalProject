@@ -20,7 +20,7 @@ struct CellChanges: View {
     @Binding var lives: [Bool]
     @State private var navigateToGameOver = false
     @Binding var gameOver: Bool
-
+    @Binding var undo: Bool
     
     var body: some View {
 
@@ -35,6 +35,11 @@ struct CellChanges: View {
                         board.printGrid()
                         if !newlyAdded.contains([row, col]) {
                             newlyAdded.append([row, col])
+                        }
+                        if newlyAdded.count > 0 {
+                            undo = true
+                        } else {
+                            undo = false
                         }
                         if board.playBoard()[row][col] != board.fullBoard()[row][col] {
                             if lives.count > 0 {
@@ -69,6 +74,7 @@ struct BoardView: View {
     @Binding var newlyAdded: [[Int]]
     @Binding var lives: [Bool]
     @Binding var gameOver: Bool
+    @Binding var undo: Bool
     
     var body: some View {
         ZStack {
@@ -78,7 +84,7 @@ struct BoardView: View {
                         ForEach(0..<9, id: \.self) { col in
                             // Create a binding for each sudoku cell
                             if board.boolBoard()[row][col] {
-                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver)
+                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo)
                                     .onTapGesture {
                                         currentNum = -1
                                     }
@@ -119,7 +125,7 @@ struct ContentView: View {
     private var board = Board()
     
     @State private var isPressed = false
-    @State var colorUndo = Color.blue.opacity(1.0)
+    @State var colorUndo = Color.blue.opacity(0.5)
     @State var newlyAdded: [[Int]] = [] // will contain coordinates the newly added cells
     
     @State var lives = [true, true, true]
@@ -142,28 +148,6 @@ struct ContentView: View {
     var body: some View {
         
         ZStack {
-//            if instructions {
-//                    Rectangle()
-//                        .fill(.white)
-//                        .border(.black, width: 5)
-//                        .frame(width: 300, height: 200)
-//                    VStack {
-//                        Text("""
-//        1. Fill the 9x9 grid with numbers 1-9
-//        2. In each row, column, and 3x3 box, the numbers 1-9 must only appear ONCE
-//        3. Use the existing numbers as clues
-//        4. Good luck!
-//    """)
-//                    }
-//                    Button(action: {
-//                        instructions = false
-//                    }) {
-//                        Text("Close")
-//                            .font(.title)
-//                    }
-//                    .buttonStyle(.bordered)
-//            }
-            
             VStack {
                 if lives.count == 3 {
                     ZStack {
@@ -261,7 +245,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 ZStack {
-                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver)
+                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo)
                     CellView()
                 }
                 
@@ -390,7 +374,7 @@ struct ContentView: View {
                     // Undo
                     VStack {
                         Circle()
-                            .foregroundColor(colorUndo)
+                            .foregroundColor(undo ? Color.blue.opacity(1.0) : Color.blue.opacity(0.5))
                             .frame(width: 80, height: 80)
                             .overlay (
                                 Image(systemName: "arrow.counterclockwise")
@@ -406,14 +390,13 @@ struct ContentView: View {
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged {_ in
-                                        colorUndo = Color.blue.opacity(0.5)
+                                        undo.toggle()
+//                                        colorUndo = Color.blue.opacity(1.0)
                                     }
                                     .onEnded { _ in
-                                        colorUndo = Color.blue.opacity(1.0)
-                                        if newlyAdded.count > 0 {
-                                            let last = newlyAdded.removeLast()
-                                            board.updateCell(row: last[0], col: last[1], num: 0)
-                                        }
+                                        undo.toggle()
+                                        let last = newlyAdded.removeLast()
+                                        board.updateCell(row: last[0], col: last[1], num: 0)
                                     }
                             )
                         
