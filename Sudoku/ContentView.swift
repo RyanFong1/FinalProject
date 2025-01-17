@@ -36,59 +36,84 @@ struct CellChanges: View {
                 .border(.black)
                 .frame(width: 39, height: 39)
                 .onTapGesture {
-                    if currentNumber != -1 {
-                        if notes {
-                            
-                            for noteRow in 0..<3 {
-                                for noteCol in 0..<3 {
-                                    if board.notesGrid()[row][col][noteCol][noteRow] == currentNumber {
-                                        board.updateNotes(row: row, col: col, noteRow: noteRow, noteCol: noteCol, bool: true)
-                                        if !newlyAdded.contains([row, col, noteCol, noteRow]) {
-                                            newlyAdded.append([row, col, noteCol, noteRow])
+                    if erase {
+                        
+                        if newlyAdded.contains (where: { subarray in
+                            subarray.contains(row) && subarray.contains(col)
+                        }) {
+                            newlyAdded = newlyAdded.filter { subarray in
+                                !(subarray.contains(row) && subarray.contains(col))
+                            }
+                            print(newlyAdded)
+                        }
+                        if newlyAdded.count == 0 {
+                            erase = false
+                        }
+                    } else if currentNumber != -1 {
+                            if notes {
+                                
+                                for noteRow in 0..<3 {
+                                    for noteCol in 0..<3 {
+                                        if board.notesGrid()[row][col][noteCol][noteRow] == currentNumber {
+                                            board.updateNotes(row: row, col: col, noteRow: noteRow, noteCol: noteCol, bool: true)
+                                            if !newlyAdded.contains([row, col, noteCol, noteRow]) {
+                                                newlyAdded.append([row, col, noteCol, noteRow])
+                                            }
+                                            print(newlyAdded)
+    //                                        print(board.notesBoolGrid())
                                         }
-                                        print(newlyAdded)
-                                        print(board.notesBoolGrid())
                                     }
                                 }
-                            }
-                            if newlyAdded.count > 0{
-                                undo = true
-                            }
-//                            if erase {
-//                                let removeItem = [row, col]
-//                                notesList = notesList.filter{ grid in
-//                                    !(grid.contains(row) && grid.contains(col))
-//                                    
-//                                }
-//                            }
-                            
-                        } else {
-                            
-                            board.updateCell(row: row, col: col, num: currentNumber, bool: false)
-                            board.printGrid()
-                            if !newlyAdded.contains([row, col]) {
-                                newlyAdded.append([row, col])
-                            }
-                            if newlyAdded.count <= 0 {
-                                undo = false
-                                erase = false
-                            } else {
-                                undo = true
-                            }
-                            if board.playBoard()[row][col] != board.fullBoard()[row][col] {
-                                if lives.count > 0 {
-                                    lives.removeLast()
+                                if newlyAdded.count > 0{
+                                    undo = true
                                 } else {
-                                    gameOver = true
+                                    erase = false
+                                    undo = false
                                 }
+    //                            if erase {
+    //
+    //                                if newlyAdded.contains { subarray in
+    //                                    subarray.contains(row) && subarray.contains(col)
+    //                                } {
+    //                                    newlyAdded = newlyAdded.filter { subarray in
+    //                                        !(subarray.contains(row) && subarray.contains(col))
+    //                                    }
+    //                                }
+    //                            }
+    //                            }
+                                
+                        } else {
+                                if !erase {
+                                    board.updateCell(row: row, col: col, num: currentNumber, bool: false)
+                                    board.printGrid()
+                                    if !newlyAdded.contains([row, col]) && !erase {
+                                        newlyAdded.append([row, col])
+                                    }
+                                    if newlyAdded.count <= 0 {
+                                        undo = false
+                                        erase = false
+                                    } else {
+                                        undo = true
+                                    }
+                                    if board.playBoard()[row][col] != board.fullBoard()[row][col] {
+                                        if lives.count > 0 {
+                                            lives.removeLast()
+                                        } else {
+                                            gameOver = true
+                                        }
+                                    }
+                                    if board.playBoard() == board.fullBoard() {
+                                        gameWon = true
+                                    }
+                                    print("\(newlyAdded)")
+                                } else {
+                                    erase = false
+    //                                board.updateCell(row: row, col: col, num: 0, bool: true)
+                                }
+                                
                             }
-                            if board.playBoard() == board.fullBoard() {
-                                gameWon = true
-                            }
-                            print("\(newlyAdded)")
+                            
                         }
-                        
-                    }
                 }
         }
 
@@ -125,11 +150,8 @@ struct PrintNum: View {
                             }
                             board.updateCell(row: row, col: col, num: 0, bool: true)
                         }
-//                        if
-//                            let removeItem = [row, col]
-//                            notesList = notesList.filter{!($0.contains([row, col]))}
-//                        }
                     }
+//
                 }
         }
     }
@@ -696,18 +718,19 @@ struct ContentView: View {
     }
     
     private func toggleActions(action: String) {
-        
-        if erase || eraseNotes {
+        if newlyAdded.count == 0 {
             erase = false
-            eraseNotes = false
         } else {
-            erase = action == "erase"
+            if erase {
+                erase = false
+            } else {
+                erase = action == "erase"
+            }
         }
         
+        
         if notes {
-            if newlyAdded.count > 0 {
-                eraseNotes = true
-            }
+
             notes = false
         } else {
             notes = action == "notes"
