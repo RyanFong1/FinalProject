@@ -26,6 +26,7 @@ struct CellChanges: View {
     @Binding var notes: Bool
     @Binding var notesNum: Int
     @Binding var notesList: [[Int]]
+    @State var removedNotes: [Int] = []
     
     var body: some View {
 
@@ -41,13 +42,25 @@ struct CellChanges: View {
                             for noteRow in 0..<3 {
                                 for noteCol in 0..<3 {
                                     if board.notesGrid()[row][col][noteCol][noteRow] == currentNumber {
-                                        board.updateNotes(row: row, col: col, num: currentNumber-1, noteRow: noteRow, noteCol: noteCol, bool: true)
-                                        notesList.append([row, col, noteCol, noteRow])
-                                        print(notesList)
+                                        board.updateNotes(row: row, col: col, noteRow: noteRow, noteCol: noteCol, bool: true)
+                                        if !newlyAdded.contains([row, col, noteCol, noteRow]) {
+                                            newlyAdded.append([row, col, noteCol, noteRow])
+                                        }
+                                        print(newlyAdded)
                                         print(board.notesBoolGrid())
                                     }
                                 }
                             }
+                            if newlyAdded.count > 0{
+                                undo = true
+                            }
+//                            if erase {
+//                                let removeItem = [row, col]
+//                                notesList = notesList.filter{ grid in
+//                                    !(grid.contains(row) && grid.contains(col))
+//                                    
+//                                }
+//                            }
                             
                         } else {
                             
@@ -112,6 +125,10 @@ struct PrintNum: View {
                             }
                             board.updateCell(row: row, col: col, num: 0, bool: true)
                         }
+//                        if
+//                            let removeItem = [row, col]
+//                            notesList = notesList.filter{!($0.contains([row, col]))}
+//                        }
                     }
                 }
         }
@@ -138,7 +155,8 @@ struct PrintBlankNotes: View {
     @Binding var currentNum: Int
     @Binding var notes: Bool
     @Binding var notesNum: Int
-    @Binding var notesList: [[Int]]
+    @Binding var newlyAdded: [[Int]]
+    
     
     var body: some View {
             HStack(spacing: 0) {
@@ -151,7 +169,7 @@ struct PrintBlankNotes: View {
                                     .border(.clear)
                                     .frame(width: (39/3), height: (39/3))
                                 ForEach(0..<9, id:\.self) { num in
-                                    if currentNum != -1 && notesList.contains([row, col, noteCol, noteRow]) && board.notesBoolGrid()[row][col][noteCol][noteRow] {
+                                    if currentNum != -1 && newlyAdded.contains([row, col, noteCol, noteRow]) && board.notesBoolGrid()[row][col][noteCol][noteRow] {
                                         Text("\(board.notesGrid()[row][col][noteCol][noteRow])")
                                             .foregroundColor(.blue)
                                             .font(.system(size: 10, weight: .regular))
@@ -197,7 +215,7 @@ struct BoardView: View {
                             if board.boolBoard()[row][col] {
                                 ZStack {
                                     CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, notes: $notes, notesNum: $notesNum, notesList: $notesList)
-                                    PrintBlankNotes(board: board, row: row, col: col, currentNum: $currentNum, notes: $notes, notesNum: $notesNum, notesList: $notesList)
+                                    PrintBlankNotes(board: board, row: row, col: col, currentNum: $currentNum, notes: $notes, notesNum: $notesNum, newlyAdded: $newlyAdded)
                                 }
                             } else {
                                 PrintNum(board: board, row: row, col: col, erase: $erase, newlyAdded: $newlyAdded, undo: $undo)
@@ -217,6 +235,7 @@ struct ContentView: View {
     @State private var notes = false
     @State private var erase = false
     @State private var undo = false
+    @State private var eraseNotes = false
     
     @State var fill = Array(repeating: false, count: 81)
     @State var tapped = false
@@ -499,7 +518,12 @@ struct ContentView: View {
                                         if newlyAdded.count > 0 {
                                             undo.toggle()
                                             let last = newlyAdded.removeLast()
-                                            board.updateCell(row: last[0], col: last[1], num: 0, bool: true)
+                                            if last.count == 2 {
+                                                board.updateCell(row: last[0], col: last[1], num: 0, bool: true)
+
+                                            } else if last.count == 4 {
+                                                board.updateNotes(row: last[0], col: last[1], noteRow: last[3], noteCol: last[2], bool: false)
+                                            }
                                             if newlyAdded.count == 0 {
                                                 undo = false
                                             }
@@ -514,7 +538,7 @@ struct ContentView: View {
                     // Erase
                     VStack {
                         Circle()
-                            .foregroundColor(erase ? Color.blue.opacity(1.0) : Color.blue.opacity(0.5))
+                            .foregroundColor(erase || eraseNotes ? Color.blue.opacity(1.0) : Color.blue.opacity(0.5))
                             .frame(width: 80, height: 80)
                             .overlay (
                                 Image(systemName: "eraser")
@@ -672,13 +696,18 @@ struct ContentView: View {
     }
     
     private func toggleActions(action: String) {
-        if erase {
+        
+        if erase || eraseNotes {
             erase = false
+            eraseNotes = false
         } else {
             erase = action == "erase"
         }
         
         if notes {
+            if newlyAdded.count > 0 {
+                eraseNotes = true
+            }
             notes = false
         } else {
             notes = action == "notes"

@@ -178,8 +178,8 @@ class Board: ObservableObject{
 //        }
 //    }
     
-    func updateNotes(row: Int, col: Int, num: Int, noteRow: Int, noteCol: Int, bool: Bool) {
-        notes[row][col][noteCol][noteRow] = num+1
+    func updateNotes(row: Int, col: Int, noteRow: Int, noteCol: Int, bool: Bool) {
+//        notes[row][col][noteCol][noteRow] = num+1
         notesBool[row][col][noteCol][noteRow] = bool
 //        print(notesBool[row][col][num])
     }
