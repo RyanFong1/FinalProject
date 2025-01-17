@@ -23,8 +23,9 @@ struct CellChanges: View {
     @Binding var undo: Bool
     @Binding var gameWon: Bool
     @Binding var erase: Bool
-    @Binding var eraseRow: Int
-    @Binding var eraseCol: Int
+    @Binding var notes: Bool
+    @Binding var notesNum: Int
+    @Binding var notesList: [[Int]]
     
     var body: some View {
 
@@ -32,35 +33,52 @@ struct CellChanges: View {
             Rectangle()
                 .fill(Color.white)
                 .border(.black)
-                .frame(width: 40, height: 40)
+                .frame(width: 39, height: 39)
                 .onTapGesture {
                     if currentNumber != -1 {
-                        board.updateCell(row: row, col: col, num: currentNumber, bool: false)
-                        board.printGrid()
-                        if !newlyAdded.contains([row, col]) {
-                            newlyAdded.append([row, col])
-                        }
-                        if newlyAdded.count <= 0 {
-                            undo = false
-                        } else {
-                            undo = true
-                        }
-                        if board.playBoard()[row][col] != board.fullBoard()[row][col] {
-                            if lives.count > 0 {
-                                lives.removeLast()
-                            } else {
-                                gameOver = true
+                        if notes {
+                            
+                            for noteRow in 0..<3 {
+                                for noteCol in 0..<3 {
+                                    if board.notesGrid()[row][col][noteCol][noteRow] == currentNumber {
+                                        board.updateNotes(row: row, col: col, num: currentNumber-1, noteRow: noteRow, noteCol: noteCol, bool: true)
+                                        notesList.append([row, col, noteCol, noteRow])
+                                        print(notesList)
+                                        print(board.notesBoolGrid())
+                                    }
+                                }
                             }
+                            
+                        } else {
+                            
+                            board.updateCell(row: row, col: col, num: currentNumber, bool: false)
+                            board.printGrid()
+                            if !newlyAdded.contains([row, col]) {
+                                newlyAdded.append([row, col])
+                            }
+                            if newlyAdded.count <= 0 {
+                                undo = false
+                                erase = false
+                            } else {
+                                undo = true
+                            }
+                            if board.playBoard()[row][col] != board.fullBoard()[row][col] {
+                                if lives.count > 0 {
+                                    lives.removeLast()
+                                } else {
+                                    gameOver = true
+                                }
+                            }
+                            if board.playBoard() == board.fullBoard() {
+                                gameWon = true
+                            }
+                            print("\(newlyAdded)")
                         }
-                        if board.playBoard() == board.fullBoard() {
-                            gameWon = true
-                        }
-                        print("\(newlyAdded)")
+                        
                     }
-
                 }
-            
         }
+
 
     }
 }
@@ -71,13 +89,14 @@ struct PrintNum: View {
     var col: Int
     @Binding var erase: Bool
     @Binding var newlyAdded: [[Int]]
+    @Binding var undo: Bool
     
     var body: some View {
         ZStack {
             Rectangle()
                 .fill(.white)
                 .border(.black)
-                .frame(width: 40, height: 40)
+                .frame(width: 39, height: 39)
             Text("\(board.playBoard()[row][col])")
                 .foregroundColor(board.playBoard()[row][col] == board.fullBoard()[row][col] ? .black : .red)
                 .font(.system(size: 29, weight: .medium))
@@ -86,6 +105,10 @@ struct PrintNum: View {
                         if newlyAdded.contains([row, col]) {
                             if let firstIndex = newlyAdded.firstIndex(of: [row, col]) {
                                 newlyAdded.remove(at: firstIndex)
+                                if newlyAdded.count == 0 {
+                                    erase = false
+                                    undo = false
+                                }
                             }
                             board.updateCell(row: row, col: col, num: 0, bool: true)
                         }
@@ -94,6 +117,56 @@ struct PrintNum: View {
         }
     }
 }
+
+
+struct PrintFilledNotes: View {
+    
+    @Binding var currentNum: Int
+    
+    var body: some View {
+        Text("\(currentNum)")
+            .foregroundColor(.blue)
+            .font(.system(size: 10, weight: .regular))
+    }
+}
+
+struct PrintBlankNotes: View {
+    
+    @ObservedObject var board = Board()
+    var row: Int
+    var col: Int
+    @Binding var currentNum: Int
+    @Binding var notes: Bool
+    @Binding var notesNum: Int
+    @Binding var notesList: [[Int]]
+    
+    var body: some View {
+            HStack(spacing: 0) {
+                ForEach(0..<3, id: \.self) { noteRow in
+                    VStack(spacing: 0) {
+                        ForEach(0..<3, id: \.self) { noteCol in
+                            ZStack {
+                                Rectangle()
+                                    .fill(.clear)
+                                    .border(.clear)
+                                    .frame(width: (39/3), height: (39/3))
+                                ForEach(0..<9, id:\.self) { num in
+                                    if currentNum != -1 && notesList.contains([row, col, noteCol, noteRow]) && board.notesBoolGrid()[row][col][noteCol][noteRow] {
+                                        Text("\(board.notesGrid()[row][col][noteCol][noteRow])")
+                                            .foregroundColor(.blue)
+                                            .font(.system(size: 10, weight: .regular))
+                                    }
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            }
+    
+    }
+}
+
 
 struct BoardView: View {
     
@@ -109,23 +182,26 @@ struct BoardView: View {
     @Binding var undo: Bool
     @Binding var gameWon: Bool
     @Binding var erase: Bool
-    @Binding var eraseRow: Int
-    @Binding var eraseCol: Int
+    @Binding var notes: Bool
+    @Binding var notesNum: Int
+    @Binding var notesList: [[Int]]
     
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
                 ForEach(0..<9, id: \.self) { row in
                     HStack(spacing: 0) {
-                        ForEach(0..<9, id: \.self) { col in
+                        ForEach(0..<9, id: \.self)
+                        { col in
                             // Create a binding for each sudoku cell
                             if board.boolBoard()[row][col] {
-                                CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, eraseRow: $eraseRow, eraseCol: $eraseCol)
-                                    .onTapGesture {
-                                        currentNum = -1
-                                    }
+                                ZStack {
+                                    CellChanges(board: board, tapped: $tapped, fill: $fill, row: row, col: col, currentNumber: $currentNum, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, notes: $notes, notesNum: $notesNum, notesList: $notesList)
+                                    PrintBlankNotes(board: board, row: row, col: col, currentNum: $currentNum, notes: $notes, notesNum: $notesNum, notesList: $notesList)
+                                }
                             } else {
-                                PrintNum(board: board, row: row, col: col, erase: $erase, newlyAdded: $newlyAdded)
+                                PrintNum(board: board, row: row, col: col, erase: $erase, newlyAdded: $newlyAdded, undo: $undo)
+
                             }
                         }
                     }
@@ -174,6 +250,8 @@ struct ContentView: View {
     @State var numClues = 0
     @State var eraseRow = 0
     @State var eraseCol = 0
+    @State var notesNum = 0
+    @State var notesList: [[Int]] = []
     
     var body: some View {
         
@@ -275,7 +353,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 ZStack {
-                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, eraseRow: $eraseRow, eraseCol: $eraseCol)
+                    BoardView(board: board, fill: $fill, tapped: $tapped, currentNum: $currentNumber, newlyAdded: $newlyAdded, lives: $lives, gameOver: $gameOver, undo: $undo, gameWon: $gameWon, erase: $erase, notes: $notes, notesNum: $notesNum, notesList: $notesList)
                     CellView()
                 }
                 

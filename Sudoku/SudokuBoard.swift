@@ -12,6 +12,9 @@ class Board: ObservableObject{
     @Published var grid: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)  // Make grid mutable
     var fullGrid: [[Int]] = []  // Make grid mutable
     var boolCheck: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)  // true if cell is mutable. all cells are initialized as false
+    var notesBool: [[[[Bool]]]] = Array(repeating: Array(repeating: Array(repeating: Array(repeating: false, count: 9), count: 9), count: 9), count: 9)
+    var notes: [[[[Int]]]] = Array(repeating: Array(repeating: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], count: 9), count: 9)
+    // [row][col][currentNum-1]
     
     func fillGrid() -> Bool {
         for row in 0..<9 {
@@ -57,7 +60,7 @@ class Board: ObservableObject{
     
     func removedNumbers(numClues clues: Int, grid: inout [[Int]]) {
         // create a list of all cell positions
-//        let fullGrid = grid
+        //        let fullGrid = grid
         var positions: [(Int, Int)] = [(Int, Int)]()
         for row in 0..<9 {
             for col in 0..<9 {
@@ -73,7 +76,7 @@ class Board: ObservableObject{
             let backup: Int = grid[row][col]
             grid[row][col] = 0
             
-//            var gridCopy = self.grid
+            //            var gridCopy = self.grid
             if !validSolution(&grid) {
                 grid[row][col] = backup
             }
@@ -82,9 +85,6 @@ class Board: ObservableObject{
     
     func numFilledCells(_ grid: inout [[Int]]) -> Int {
         return grid.flatMap{$0}.filter{$0 != 0}.count
-        // .flatMap{$0} returns a 2D array as a 1D array and returns the value as it is
-        // .filter{$0 != 0} creates a new array that only has values that are not equal to 0
-        // .count returns the number of elements in the new array
     }
     
     func validSolution(_ grid: inout [[Int]]) -> Bool {
@@ -166,4 +166,35 @@ class Board: ObservableObject{
         cellBool()
         return boolCheck
     }
+    
+    
+//    func notesBoolCheck() {
+//        for row in 0..<9 {
+//            for col in 0..<9 {
+//                for num in 0..<9 {
+//                    notesBool[row][col][num] = (notes[row][col][num] == 0)
+//                }
+//            }
+//        }
+//    }
+    
+    func updateNotes(row: Int, col: Int, num: Int, noteRow: Int, noteCol: Int, bool: Bool) {
+        notes[row][col][noteCol][noteRow] = num+1
+        notesBool[row][col][noteCol][noteRow] = bool
+//        print(notesBool[row][col][num])
+    }
+    
+    func clearNotes(row: Int, col: Int) {
+        notes[row][col] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        notesBool[row][col] = Array(repeating: Array(repeating: true, count: 3), count: 3)
+    }
+    
+    func notesGrid() -> [[[[Int]]]] {
+        return notes
+    }
+    
+    func notesBoolGrid() -> [[[[Bool]]]] {
+        return notesBool
+    }
+    
 }

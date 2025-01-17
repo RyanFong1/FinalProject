@@ -17,14 +17,14 @@ struct CellView: View {
                             Rectangle()
                                 .foregroundColor(Color.black.opacity(0.0))
                                 .border(Color.black, width: 2)
-                                .frame(width: 120, height: 120)
+                                .frame(width: 117, height: 117)
                         }
                     }
                 }
             }
             
             Rectangle()
-                .frame(width: 369, height: 369)
+                .frame(width: 365, height: 365)
                 .foregroundColor(Color.black.opacity(0.0))
                 .border(Color.black, width: 8)
         }
