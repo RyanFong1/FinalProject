@@ -121,6 +121,7 @@ class Board: ObservableObject{
     func generateBoard(numClues clues: Int, restart: Bool) {
         if restart {
             grid = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+            notesBool = Array(repeating: Array(repeating: Array(repeating: Array(repeating: false, count: 9), count: 9), count: 9), count: 9)
         }
         _ = fillGrid() // the grid gets completely filled with a valid solution
         fullGrid = grid
@@ -167,21 +168,8 @@ class Board: ObservableObject{
         return boolCheck
     }
     
-    
-//    func notesBoolCheck() {
-//        for row in 0..<9 {
-//            for col in 0..<9 {
-//                for num in 0..<9 {
-//                    notesBool[row][col][num] = (notes[row][col][num] == 0)
-//                }
-//            }
-//        }
-//    }
-    
     func updateNotes(row: Int, col: Int, noteRow: Int, noteCol: Int, bool: Bool) {
-//        notes[row][col][noteCol][noteRow] = num+1
         notesBool[row][col][noteCol][noteRow] = bool
-//        print(notesBool[row][col][num])
     }
     
     func clearNotes(row: Int, col: Int) {
