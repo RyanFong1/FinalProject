@@ -10,7 +10,7 @@ import SwiftUI
 struct CellView: View {
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
+            VStack(spacing: 0) { // prints the 3x3 grids in a thicker border
                 ForEach(0..<3, id: \.self) {row in
                     HStack(spacing: 0) {
                         ForEach(0..<3, id: \.self) {col in
@@ -23,6 +23,7 @@ struct CellView: View {
                 }
             }
             
+            // prints the thick border around the entire board
             Rectangle()
                 .frame(width: 365, height: 365)
                 .foregroundColor(Color.black.opacity(0.0))

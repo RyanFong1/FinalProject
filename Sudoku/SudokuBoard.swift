@@ -12,24 +12,26 @@ class Board: ObservableObject{
     @Published var grid: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)  // Make grid mutable
     var fullGrid: [[Int]] = []  // Make grid mutable
     var boolCheck: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)  // true if cell is mutable. all cells are initialized as false
-    var notesBool: [[[[Bool]]]] = Array(repeating: Array(repeating: Array(repeating: Array(repeating: false, count: 9), count: 9), count: 9), count: 9)
+    var notesBool: [[[[Bool]]]] = Array(repeating: Array(repeating: Array(repeating: Array(repeating: false, count: 9), count: 9), count: 9), count: 9) // notes are all initialized to false (editable)
     var notes: [[[[Int]]]] = Array(repeating: Array(repeating: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], count: 9), count: 9)
     // [row][col][currentNum-1]
     
     func fillGrid() -> Bool {
         for row in 0..<9 {
             for col in 0..<9 {
-                if grid[row][col] == 0 {
+                if grid[row][col] == 0 { // if this current cell has not been filled yet
                     var numbers: [Int] = Array(1...9)
                     numbers.shuffle()
                     
+                    // fill each cell with a random number from 1-9
                     for num in numbers {
+                        // checks if filling the cell with a given number between 1-9 abides to the rules of Sudoku
                         if checkValid(row: row, col: col, num: num, grid: &grid) {
-                            grid[row][col] = num
-                            if fillGrid() {
+                            grid[row][col] = num // if this number is valid to be in this cell, update the grid array to contain this number
+                            if fillGrid() { // if one cell is successfully filled, recursively check the entire grid to fill the next cell. Rinse and repeat.
                                 return true
                             }
-                            grid[row][col] = 0
+                            grid[row][col] = 0 // if none of the numbers from 1-9 is valid in this cell, the recursion is exited and this cell is initialized to 0 again (to indicate that it is empty and needs to be filled)
                         }
                     }
                     return false
@@ -41,26 +43,26 @@ class Board: ObservableObject{
     
     func checkValid(row: Int, col: Int, num: Int, grid: inout [[Int]]) -> Bool {
         for i in 0..<9 {
-            if grid[i][col] == num || grid[row][i] == num {
+            if grid[i][col] == num || grid[row][i] == num { // checks each row and column. If the row and column this current cell is in already has this number, return false so this cell can be filled with the next number
                 return false
             }
         }
         
         let smallCellRow: Int = (row / 3) * 3 // gets the starting row of the 3x3 grid
         let smallCellCol: Int = (col / 3) * 3 // gets the starting col of the 3x3 grid
+        // checks each 3x3 grid
         for i in smallCellRow..<smallCellRow + 3 {
             for j in smallCellCol..<smallCellCol + 3 {
-                if grid[i][j] == num {
+                if grid[i][j] == num { // if the number that wants to be filled into this cell already exists in the 3x3, return false
                     return false
                 }
             }
         }
-        return true
+        return true // otherwise, return true. This number can be filled in this cell without violating the rules of Sudoku
     }
     
     func removedNumbers(numClues clues: Int, grid: inout [[Int]]) {
         // create a list of all cell positions
-        //        let fullGrid = grid
         var positions: [(Int, Int)] = [(Int, Int)]()
         for row in 0..<9 {
             for col in 0..<9 {
@@ -69,10 +71,9 @@ class Board: ObservableObject{
         }
         
         positions.shuffle() // cell positions are no longer in order
-        print(positions)
         
-        while positions.count > 0 && numFilledCells(&grid) > clues {
-            let (row, col) = positions.removeFirst()
+        while positions.count > 0 && numFilledCells(&grid) > clues { // if the number of filled cells is greater than the number of cells that need to remain filled (number of clues)
+            let (row, col) = positions.removeFirst() // remove the value of a cell (now the cell is empty)
             let backup: Int = grid[row][col]
             grid[row][col] = 0
             
@@ -119,48 +120,45 @@ class Board: ObservableObject{
     }
     
     func generateBoard(numClues clues: Int, restart: Bool) {
-        if restart {
+        if restart { // if the game is restarted, re-initialize the array of actual values and notes so a new boad can be generated again
             grid = Array(repeating: Array(repeating: 0, count: 9), count: 9)
             notesBool = Array(repeating: Array(repeating: Array(repeating: Array(repeating: false, count: 9), count: 9), count: 9), count: 9)
         }
-        _ = fillGrid() // the grid gets completely filled with a valid solution
+        _ = fillGrid() // the grid gets completely filled with a valid solution (new board is generated)
         fullGrid = grid
-        removedNumbers(numClues: clues, grid: &grid)
+        removedNumbers(numClues: clues, grid: &grid) // removes all cells (so they are empty) and keeping only the values in x number of cells (this is the number of clues)
     }
     
     func printGrid() {
         for row in grid {
-            print(row.map({ String($0) }).joined(separator: " "))
+            print(row.map({ String($0) }).joined(separator: " ")) // prints the game board (including empty cells)
         }
         print("-----------------")
         for row in fullGrid {
-            print(row.map({ String($0) }).joined(separator: " "))
+            print(row.map({ String($0) }).joined(separator: " ")) // prints the solutions board (all cells have a value)
         }
     }
     
-    func playBoard() -> [[Int]]{
+    func playBoard() -> [[Int]]{ // returns the board containing 0s (empty cells)
         return grid
     }
     
-    func fullBoard() -> [[Int]]{
+    func fullBoard() -> [[Int]]{ // returns the solutions board
         return fullGrid
     }
     
     func cellBool() {
         for row in 0..<9 {
             for col in 0..<9 {
-                boolCheck[row][col] = (grid[row][col] == 0)
+                boolCheck[row][col] = (grid[row][col] == 0) // generates a boolean board. Bool for each cell is true if empty, false otherwise
             }
         }
     }
     
     func updateCell(row: Int, col: Int, num: Int, bool: Bool) {
+        // when a new number is added to an editable cell, that cell gets updated to the number selected and the boolean is false (indicating this cell is no longer empty)
         grid[row][col] = num
         boolCheck[row][col] = bool
-    }
-    
-    func generateBoolBoard(){
-        cellBool()
     }
     
     func boolBoard() -> [[Bool]] {
@@ -169,20 +167,16 @@ class Board: ObservableObject{
     }
     
     func updateNotes(row: Int, col: Int, noteRow: Int, noteCol: Int, bool: Bool) {
+        // updates the mini grid of the notes with a boolean (true for editable, false for non-editable)
         notesBool[row][col][noteCol][noteRow] = bool
     }
     
-    func clearNotes(row: Int, col: Int) {
-        notes[row][col] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        notesBool[row][col] = Array(repeating: Array(repeating: true, count: 3), count: 3)
-    }
-    
     func notesGrid() -> [[[[Int]]]] {
-        return notes
+        return notes // return notes array [[1, 2, 3], [4, 5, 6], [7, 8, 9]] for each cell
     }
     
     func notesBoolGrid() -> [[[[Bool]]]] {
-        return notesBool
+        return notesBool // returns notes bool array (true/false for each note's mini-cell)
     }
     
 }
